@@ -1,0 +1,56 @@
+version: "3.7"
+services:
+  node:
+    # Replace `snapshot-DATE` with latest release (like `snapshot-2022-mar-09`)
+    # https://github.com/subspace/subspace/pkgs/container/node
+    image: ghcr.io/subspace/node:snapshot-2022-mar-09
+    volumes:
+      # Instead of specifying volume (which will store data in `/var/lib/docker`), you can
+      # alternatively specify path to the directory where files will be stored, just make
+      # sure everyone is allowed to write there
+      - ./node-data:/var/subspace:rw
+    #      - /path/to/subspace-node:/var/subspace:rw
+    ports:
+      # If port 30333 is already occupied by another Substrate-based node, replace all
+      # occurrences of `30333` in this file with another value
+      - "0.0.0.0:30333:30333"
+    restart: unless-stopped
+    command: [
+      "--chain", "testnet",
+      "--base-path", "/var/subspace",
+      "--wasm-execution", "compiled",
+      "--execution", "wasm",
+      "--bootnodes", "/dns/farm-rpc.subspace.network/tcp/30333/p2p/12D3KooWPjMZuSYj35ehced2MTJFf95upwpHKgKUrFRfHwohzJXr",
+      "--port", "30333",
+      "--telemetry-url", "wss://telemetry.polkadot.io/submit/ 1",
+      "--telemetry-url", "wss://telemetry.subspace.network/submit/ 1",
+      "--rpc-cors", "all",
+      "--rpc-methods", "safe",
+      "--unsafe-ws-external",
+      "--validator",
+      # Replace `INSERT_YOUR_ID` with your node ID (will be shown in telemetry)
+      "--name", "res1709"
+    ]
+
+  farmer:
+    depends_on:
+      - node
+    # Replace `snapshot-DATE` with latest release (like `snapshot-2022-mar-09`)
+    image: ghcr.io/subspace/farmer:snapshot-2022-mar-09
+    # Un-comment following 2 lines to unlock farmer's RPC
+    #    ports:
+    #      - "127.0.0.1:9955:9955"
+    # Instead of specifying volume (which will store data in `/var/lib/docker`), you can
+    # alternatively specify path to the directory where files will be stored, just make
+    # sure everyone is allowed to write there
+    volumes:
+      - ./farmer-data:/var/subspace:rw
+    #      - /path/to/subspace-farmer:/var/subspace:rw
+    restart: unless-stopped
+    command: [
+      "farm",
+      "--node-rpc-url", "ws://node:9944",
+      "--ws-server-listen-addr", "0.0.0.0:9955",
+      # Replace `WALLET_ADDRESS` with your Polkadot.js wallet address
+      "--reward-address", "st7Df8Hcw5C1bwsykFQd39XDkw52HVgHyLVyQXASsJ992v1cD"
+    ]
